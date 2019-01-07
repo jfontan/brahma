@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 
 	log "gopkg.in/src-d/go-log.v1"
@@ -30,8 +31,9 @@ func NewClient(server string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) path(path string) string {
-	u := &url.URL{Path: path}
+func (c *Client) path(path string, args ...interface{}) string {
+	p := fmt.Sprintf(path, args...)
+	u := &url.URL{Path: p}
 	return c.url.ResolveReference(u).String()
 }
 
@@ -48,6 +50,22 @@ func (c *Client) Repository() (Repository, error) {
 	}
 
 	return repo, nil
+}
+
+func (c *Client) Upload(id, path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = c.client.Post(
+		c.path("/upload/%s", id),
+		"application/octet-stream",
+		f,
+	)
+
+	return err
 }
 
 func (c *Client) Download() error {
@@ -71,6 +89,11 @@ func (c *Client) Download() error {
 		).Infof("downloading repository")
 
 		err = Download(repo.URL, path)
+		if err != nil {
+			return err
+		}
+
+		err = c.Upload(repo.ID, path)
 		if err != nil {
 			return err
 		}
