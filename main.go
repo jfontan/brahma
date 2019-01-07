@@ -5,17 +5,23 @@ import (
 	"os"
 
 	"github.com/jfontan/brahma/pkg/brahma"
+	"github.com/sanity-io/litter"
 )
 
 func client() error {
-	if len(os.Args) != 4 {
-		panic("usage: brahma client <url> <file>")
+	c, err := brahma.NewClient("http://localhost:8765")
+	if err != nil {
+		return err
 	}
 
-	repoURL := os.Args[2]
-	sivaFile := os.Args[3]
+	for {
+		repo, err := c.Repository()
+		if err != nil {
+			return err
+		}
 
-	return brahma.Download(repoURL, sivaFile)
+		litter.Dump(repo)
+	}
 }
 
 func server() error {

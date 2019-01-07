@@ -9,7 +9,7 @@ import (
 )
 
 type Repository struct {
-	ID  string `json:"name"`
+	ID  string `json:"id"`
 	URL string `json:"url"`
 }
 
