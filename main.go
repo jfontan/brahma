@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/jfontan/brahma/pkg/brahma"
-	"github.com/sanity-io/litter"
 )
 
 func client() error {
@@ -14,14 +13,7 @@ func client() error {
 		return err
 	}
 
-	for {
-		repo, err := c.Repository()
-		if err != nil {
-			return err
-		}
-
-		litter.Dump(repo)
-	}
+	return c.Download()
 }
 
 func server() error {

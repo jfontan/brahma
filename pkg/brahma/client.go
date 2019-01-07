@@ -2,13 +2,19 @@ package brahma
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
+
+	log "gopkg.in/src-d/go-log.v1"
 )
 
 type Client struct {
-	url    *url.URL
-	client *http.Client
+	url     *url.URL
+	client  *http.Client
+	storage string
 }
 
 func NewClient(server string) (*Client, error) {
@@ -18,8 +24,9 @@ func NewClient(server string) (*Client, error) {
 	}
 
 	return &Client{
-		url:    url,
-		client: new(http.Client),
+		url:     url,
+		client:  new(http.Client),
+		storage: "client",
 	}, nil
 }
 
@@ -41,4 +48,31 @@ func (c *Client) Repository() (Repository, error) {
 	}
 
 	return repo, nil
+}
+
+func (c *Client) Download() error {
+	for {
+		repo, err := c.Repository()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+
+			return err
+		}
+
+		name := fmt.Sprintf("%s.siva", repo.ID)
+		path := filepath.Join(c.storage, name)
+
+		log.With(log.Fields{
+			"id":   repo.ID,
+			"url":  repo.URL,
+			"siva": path},
+		).Infof("downloading repository")
+
+		err = Download(repo.URL, path)
+		if err != nil {
+			return err
+		}
+	}
 }
